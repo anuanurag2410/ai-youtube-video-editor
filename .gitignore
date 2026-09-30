@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Secrets
+.env
+.env.local
+.env.*.local
+
+# IDE / OS
+.DS_Store
+.vscode/
+.idea/
+
+# Local media and generated files
+storage/uploads/*
+storage/processed/*
+storage/exports/*
+!storage/uploads/.gitkeep
+!storage/processed/.gitkeep
+!storage/exports/.gitkeep
+
+# Large/private asset library
+assets/private/
+*.mp4
+*.mov
+*.mkv
+*.wav
+*.mp3
+
+# Node
+node_modules/
+.next/
+dist/
