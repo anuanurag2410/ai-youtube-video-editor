@@ -8,6 +8,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 
+from backend.app.api import router
 from backend.app.services.edit_planner import build_initial_plan
 from backend.app.services.media import detect_silence, extract_audio, probe_video
 
@@ -28,6 +29,8 @@ app = FastAPI(
     version="0.1.0",
     description="AI-assisted long-form YouTube editing backend.",
 )
+
+app.include_router(router)
 
 
 @app.get("/health")
