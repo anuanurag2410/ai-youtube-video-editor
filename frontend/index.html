@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI YouTube Video Editor</title>
+  <style>
+    :root{
+      --bg:#0b0d10;--panel:#12161b;--border:#232a33;--text:#f4f7fb;
+      --muted:#98a2b3;--accent:#7c9cff;--success:#53d18a;--danger:#ff6b6b;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    .wrap{max-width:880px;margin:64px auto;padding:0 20px}
+    h1{font-size:34px;margin:0 0 8px}
+    .sub{color:var(--muted);margin-bottom:32px}
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:22px;margin-bottom:18px}
+    .row{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:12px}
+    .title{font-size:18px;font-weight:700}
+    .status{color:var(--muted);font-size:14px}
+    input[type=file]{width:100%;padding:12px;background:#0e1116;color:var(--text);border:1px solid var(--border);border-radius:12px}
+    button{border:0;border-radius:12px;padding:11px 16px;font-weight:700;cursor:pointer;background:var(--accent);color:white}
+    button:disabled{opacity:.45;cursor:not-allowed}
+    .bar{height:12px;background:#0e1116;border-radius:999px;overflow:hidden;border:1px solid var(--border)}
+    .fill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--success));transition:width .25s ease}
+    .meta{display:flex;justify-content:space-between;margin-top:8px;color:var(--muted);font-size:13px}
+    .project{margin-top:12px;color:var(--muted);font-size:13px;word-break:break-all}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+    .ok{color:var(--success)}
+    .err{color:var(--danger)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>AI YouTube Video Editor</h1>
+    <div class="sub">Upload → Transcribe → Export</div>
+
+    <div class="card">
+      <div class="row">
+        <div class="title">1. Upload Video</div>
+        <div id="uploadPct" class="status">0%</div>
+      </div>
+      <input id="videoFile" type="file" accept="video/mp4,video/quicktime,video/x-matroska,video/x-m4v" />
+      <div class="actions"><button id="uploadBtn">Upload</button></div>
+      <div class="bar"><div id="uploadBar" class="fill"></div></div>
+      <div class="meta"><span id="uploadMsg">Waiting for video</span><span id="uploadState"></span></div>
+      <div id="projectId" class="project"></div>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <div class="title">2. Transcribe</div>
+        <div id="transcribePct" class="status">0%</div>
+      </div>
+      <div class="actions"><button id="transcribeBtn" disabled>Start Transcription</button></div>
+      <div class="bar"><div id="transcribeBar" class="fill"></div></div>
+      <div class="meta"><span id="transcribeMsg">Upload a video first</span><span></span></div>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <div class="title">3. Export Video</div>
+        <div id="renderPct" class="status">0%</div>
+      </div>
+      <div class="actions"><button id="renderBtn" disabled>Export Edited Video</button></div>
+      <div class="bar"><div id="renderBar" class="fill"></div></div>
+      <div class="meta"><span id="renderMsg">Complete transcription first</span><span></span></div>
+    </div>
+  </div>
+
+<script>
+let projectId = null;
+let pollTimer = null;
+
+function setProgress(kind, pct, msg){
+  const safe=Math.max(0,Math.min(100,Math.round(pct)));
+  document.getElementById(kind+"Bar").style.width=safe+"%";
+  document.getElementById(kind+"Pct").textContent=safe+"%";
+  if(msg) document.getElementById(kind+"Msg").textContent=msg;
+}
+
+function startPolling(kind, minPct, maxPct){
+  stopPolling();
+  pollTimer=setInterval(async()=>{
+    if(!projectId) return;
+    try{
+      const r=await fetch(`/projects/${projectId}/status`);
+      if(!r.ok) return;
+      const s=await r.json();
+      let mapped=minPct;
+      if(kind==="transcribe"){
+        mapped = Math.max(minPct, Math.min(maxPct, ((s.percent-40)/(82-40))*100));
+      }else if(kind==="render"){
+        mapped = Math.max(minPct, Math.min(maxPct, ((s.percent-84)/(100-84))*100));
+      }
+      setProgress(kind,mapped,s.message || s.stage);
+    }catch(e){}
+  },700);
+}
+function stopPolling(){ if(pollTimer){clearInterval(pollTimer);pollTimer=null;} }
+
+document.getElementById("uploadBtn").onclick=()=>{
+  const file=document.getElementById("videoFile").files[0];
+  if(!file){alert("Choose a video first.");return;}
+
+  const form=new FormData(); form.append("file",file);
+  const xhr=new XMLHttpRequest();
+  xhr.open("POST","/projects/upload");
+  document.getElementById("uploadBtn").disabled=true;
+  setProgress("upload",0,"Uploading video...");
+
+  xhr.upload.onprogress=(e)=>{
+    if(e.lengthComputable){
+      const pct=(e.loaded/e.total)*88;
+      setProgress("upload",pct,"Uploading video...");
+    }
+  };
+
+  xhr.onreadystatechange=()=>{
+    if(xhr.readyState===2){
+      setProgress("upload",90,"Upload complete. Analyzing video...");
+    }
+  };
+
+  xhr.onload=()=>{
+    document.getElementById("uploadBtn").disabled=false;
+    if(xhr.status>=200 && xhr.status<300){
+      const data=JSON.parse(xhr.responseText);
+      projectId=data.project_id;
+      setProgress("upload",100,"Video ready");
+      document.getElementById("uploadState").textContent="Complete";
+      document.getElementById("uploadState").className="ok";
+      document.getElementById("projectId").textContent="Project ID: "+projectId;
+      document.getElementById("transcribeBtn").disabled=false;
+      document.getElementById("transcribeMsg").textContent="Ready to transcribe";
+    }else{
+      setProgress("upload",0,"Upload failed");
+      document.getElementById("uploadState").textContent="Failed";
+      document.getElementById("uploadState").className="err";
+    }
+  };
+  xhr.onerror=()=>{
+    document.getElementById("uploadBtn").disabled=false;
+    setProgress("upload",0,"Upload failed");
+  };
+  xhr.send(form);
+};
+
+document.getElementById("transcribeBtn").onclick=async()=>{
+  if(!projectId)return;
+  const btn=document.getElementById("transcribeBtn");
+  btn.disabled=true;
+  setProgress("transcribe",2,"Starting transcription...");
+  startPolling("transcribe",2,96);
+  try{
+    const r=await fetch(`/projects/${projectId}/transcribe`,{method:"POST"});
+    const data=await r.json();
+    stopPolling();
+    if(!r.ok) throw new Error(data.detail || "Transcription failed");
+    setProgress("transcribe",100,"Transcription complete");
+    document.getElementById("renderBtn").disabled=false;
+    document.getElementById("renderMsg").textContent="Ready to export";
+  }catch(e){
+    stopPolling();
+    setProgress("transcribe",0,e.message);
+    btn.disabled=false;
+  }
+};
+
+document.getElementById("renderBtn").onclick=async()=>{
+  if(!projectId)return;
+  const btn=document.getElementById("renderBtn");
+  btn.disabled=true;
+  setProgress("render",2,"Preparing export...");
+  startPolling("render",2,97);
+  try{
+    const r=await fetch(`/projects/${projectId}/render`,{method:"POST"});
+    const data=await r.json();
+    stopPolling();
+    if(!r.ok) throw new Error(data.detail || "Export failed");
+    setProgress("render",100,"Export complete: "+data.output);
+  }catch(e){
+    stopPolling();
+    setProgress("render",0,e.message);
+    btn.disabled=false;
+  }
+};
+</script>
+</body>
+</html>
