@@ -7,13 +7,19 @@ from backend.app.schemas.edit_plan import CutTransition, EditPlan, TimeRange
 
 def silence_to_cuts(
     silences: list[dict],
-    keep_pause: float = 0.35,
-    remove_threshold: float = 1.20,
+    keep_pause: float = 0.20,
+    remove_threshold: float = 0.75,
 ) -> list[TimeRange]:
     """
-    Shorten long silences without eliminating natural breathing room.
+    Shorten conversational pauses for a tighter YouTube pace while retaining
+    a small amount of natural breathing room.
 
-    V2 also attaches a subtle transition policy to every generated cut:
+    V2.1 uses a more practical talking-head profile:
+    - detect shorter pauses upstream (~0.55s)
+    - shorten pauses from ~0.75s onward
+    - retain ~0.20s total pause around each cut
+
+    It also attaches a subtle transition policy to every generated cut:
     - ~90ms visual/audio blend
     - subtle post-cut punch-in
     """
