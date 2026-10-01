@@ -214,6 +214,7 @@ def _premium_overlay_chain(
 
     if kind == "logo":
         width = 560
+        height = 327
         target_x = "W-w-72"
         target_y = "92"
         zoom_limit = 1.035
@@ -221,6 +222,7 @@ def _premium_overlay_chain(
         slide_px = 300
     else:
         width = 900
+        height = 554
         target_x = "W-w-60"
         target_y = "(H-h)/2-10"
         zoom_limit = 1.045
@@ -238,7 +240,7 @@ def _premium_overlay_chain(
         f"zoompan=z='min(zoom+{zoom_step:.6f},{zoom_limit:.4f})':"
         "x='iw/2-(iw/zoom/2)':"
         "y='ih/2-(ih/zoom/2)':"
-        f"d=1:s={width}x-2:fps={fps},"
+        f"d=1:s={width}x{height}:fps={fps},"
         f"fade=t=in:st=0:d={fade:.3f}:alpha=1,"
         f"fade=t=out:st={fade_out_start:.3f}:d={fade:.3f}:alpha=1,"
         f"setpts=PTS-STARTPTS+{start:.3f}/TB[{asset_label}]"
