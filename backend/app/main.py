@@ -40,7 +40,7 @@ def home():
     return FileResponse("frontend/index.html", headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"})
 
 
-@app.get("/health")
+@app.get("/favicon.svg", include_in_schema=False)\ndef favicon():\n    return FileResponse("frontend/favicon.svg", media_type="image/svg+xml", headers={"Cache-Control": "no-store"})\n\n\n@app.get("/health")
 def health() -> dict:
     return {"status": "ok", "app": APP_NAME}
 
