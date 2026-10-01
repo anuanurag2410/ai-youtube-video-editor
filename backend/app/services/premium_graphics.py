@@ -120,12 +120,12 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     return output_path
 
 
-def zoompan_expression(plan: EditPlan) -> str | None:
+def zoompan_expression(plan: EditPlan, fps: int = 30) -> str | None:
     """
-    Create one source-time expression for sparse transcript-driven punch-ins.
+    Create a smooth source-time zoom expression.
 
-    We intentionally keep this binary/subtle instead of aggressive animated
-    zooming so educational content stays premium and calm.
+    Each zoom eases in and back out using a sine curve, so there is no sudden
+    1.0 -> 1.05 jump.
     """
     valid = [
         z for z in plan.zooms
@@ -137,13 +137,135 @@ def zoompan_expression(plan: EditPlan) -> str | None:
 
     expr = "1.0"
 
-    # Later decisions wrap earlier ones. The count is intentionally small.
     for zoom in valid[:24]:
-        scale = min(float(zoom.scale), 1.10)
-        expr = (
-            f"if(between(in_time,{float(zoom.start):.3f},"
-            f"{float(zoom.end):.3f}),{scale:.4f},{expr})"
+        start_frame = float(zoom.start) * fps
+        end_frame = float(zoom.end) * fps
+        span = max(1.0, end_frame - start_frame)
+        amount = min(float(zoom.scale), 1.10) - 1.0
+
+        smooth = (
+            f"1+{amount:.5f}*sin(PI*(on-{start_frame:.3f})/{span:.3f})"
         )
 
-    # Keep syntax predictable for FFmpeg.
+        expr = (
+            f"if(between(on,{start_frame:.3f},{end_frame:.3f}),"
+            f"{smooth},{expr})"
+        )
+
     return re.sub(r"\s+", "", expr)
+
+
+def _ffmpeg_text(text: str) -> str:
+    text = (text or "").replace("\\", r"\\")
+    text = text.replace(":", r"\:")
+    text = text.replace("'", r"\'")
+    text = text.replace("%", r"\%")
+    text = text.replace(",", r"\,")
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
+
+def _caption_text(text: str, max_words: int = 10) -> str:
+    words = re.sub(r"\s+", " ", (text or "").strip()).split()
+    if len(words) <= max_words:
+        return " ".join(words)
+    return " ".join(words[:max_words]) + "…"
+
+
+def _technology_name(asset_id: str) -> str:
+    slug = Path(asset_id).parts[-2] if len(Path(asset_id).parts) >= 2 else asset_id
+    names = {
+        "databricks": "Databricks",
+        "spark": "Apache Spark",
+        "pyspark": "PySpark",
+        "python": "Python",
+        "sql": "SQL",
+        "snowflake": "Snowflake",
+        "bigquery": "BigQuery",
+        "airflow": "Apache Airflow",
+        "aws": "AWS",
+        "azure": "Azure",
+        "gcp": "Google Cloud",
+        "delta-lake": "Delta Lake",
+    }
+    return names.get(slug, slug.replace("-", " ").title())
+
+
+def build_drawtext_filters(transcript: dict, plan: EditPlan) -> list[str]:
+    """
+    Build source-time caption and technology-card filters.
+
+    Uses drawtext/drawbox only, avoiding libass/subtitles dependencies.
+    """
+    filters: list[str] = []
+
+    for segment in transcript.get("segments", []):
+        start = segment.get("start")
+        end = segment.get("end")
+        text = _caption_text(segment.get("text", ""))
+
+        if start is None or end is None or not text:
+            continue
+
+        safe = _ffmpeg_text(text)
+        filters.append(
+            "drawtext="
+            "font='Arial':"
+            f"text='{safe}':"
+            "fontsize=54:"
+            "fontcolor=white:"
+            "borderw=2:"
+            "bordercolor=black@0.75:"
+            "box=1:"
+            "boxcolor=black@0.55:"
+            "boxborderw=20:"
+            "x=(w-text_w)/2:"
+            "y=h-text_h-92:"
+            f"enable='between(t,{float(start):.3f},{float(end):.3f})'"
+        )
+
+    # Key points appear top-left and are intentionally sparse.
+    for overlay in plan.text_overlays[:12]:
+        safe = _ffmpeg_text(_caption_text(overlay.text, max_words=7))
+        start = float(overlay.start)
+        end = start + float(overlay.duration)
+
+        filters.append(
+            "drawtext="
+            "font='Arial':"
+            f"text='{safe}':"
+            "fontsize=46:"
+            "fontcolor=white:"
+            "box=1:"
+            "boxcolor=black@0.68:"
+            "boxborderw=22:"
+            "x=70:"
+            "y=70:"
+            f"enable='between(t,{start:.3f},{end:.3f})'"
+        )
+
+    # Technology cards provide immediate visual context until real logo assets
+    # are supplied in assets/technologies/<slug>/logo.png.
+    for cue in plan.broll[:20]:
+        start = float(cue.start)
+        end = start + float(cue.duration)
+        name = _ffmpeg_text(_technology_name(cue.asset_id))
+
+        filters.append(
+            "drawbox="
+            "x=w-470:y=75:w=390:h=125:"
+            "color=black@0.64:t=fill:"
+            f"enable='between(t,{start:.3f},{end:.3f})'"
+        )
+        filters.append(
+            "drawtext="
+            "font='Arial':"
+            f"text='{name}':"
+            "fontsize=42:"
+            "fontcolor=white:"
+            "x=w-text_w-115:"
+            "y=112:"
+            f"enable='between(t,{start:.3f},{end:.3f})'"
+        )
+
+    return filters
