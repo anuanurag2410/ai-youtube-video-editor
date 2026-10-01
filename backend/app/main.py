@@ -35,7 +35,14 @@ app = FastAPI(
 app.include_router(router)
 
 
-@app.get("/", include_in_schema=False)\ndef home():\n    return FileResponse("frontend/index.html")\n\n\n@app.get("/health")\ndef health() -> dict:\n    return {"status": "ok", "app": APP_NAME}
+@app.get("/", include_in_schema=False)
+def home():
+    return FileResponse("frontend/index.html")
+
+
+@app.get("/health")
+def health() -> dict:
+    return {"status": "ok", "app": APP_NAME}
 
 
 @app.post("/projects/upload")
