@@ -9,6 +9,7 @@ from fastapi import APIRouter, HTTPException
 from backend.app.schemas.edit_plan import CutTransition, EditPlan, TimeRange
 from backend.app.services.media import probe_video
 from backend.app.services.progress import read_progress, write_progress
+from backend.app.services.premium_graphics import write_premium_ass
 from backend.app.services.captions import write_srt
 from backend.app.services.smart_director import enrich_edit_plan
 from backend.app.services.renderer import render_clean_cut
@@ -256,7 +257,19 @@ def render_project(project_id: str) -> dict:
         metadata = probe_video(source_video)
         duration = float(metadata["format"]["duration"])
 
-        output_path = EXPORTS / f"{project_id}_clean.mp4"
+        output_path = EXPORTS / f"{project_id}_premium.mp4"
+
+        transcript_path = project_dir / "transcript.json"
+        ass_path = None
+        if transcript_path.exists():
+            transcript = json.loads(transcript_path.read_text(encoding="utf-8"))
+            ass_path = write_premium_ass(
+                transcript,
+                plan,
+                project_dir / "premium_overlay.ass",
+                width=plan.output_width,
+                height=plan.output_height,
+            )
 
         write_progress(
             project_dir,
@@ -270,6 +283,7 @@ def render_project(project_id: str) -> dict:
             output_path=output_path,
             duration=duration,
             plan=plan,
+            ass_path=ass_path,
         )
 
         write_progress(
