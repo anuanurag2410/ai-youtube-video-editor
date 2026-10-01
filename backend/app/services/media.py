@@ -63,7 +63,7 @@ def extract_audio(video_path: Path, audio_path: Path) -> Path:
 def detect_silence(
     audio_path: Path,
     noise_db: int = -40,
-    minimum_duration: float = 0.9,
+    minimum_duration: float = 0.55,
 ) -> list[dict]:
     command = [
         "ffmpeg",
