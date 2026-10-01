@@ -12,6 +12,23 @@ class RenderError(RuntimeError):
     pass
 
 
+def _ffmpeg_has_filter(name: str) -> bool:
+    try:
+        result = subprocess.run(
+            ["ffmpeg", "-hide_banner", "-filters"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return any(
+            line.split() and line.split()[-1] == name
+            for line in result.stdout.splitlines()
+            if not line.startswith(" ")
+        ) or f" {name} " in result.stdout or result.stdout.rstrip().endswith(f" {name}")
+    except Exception:
+        return False
+
+
 @dataclass
 class KeepSegment:
     start: float
@@ -88,7 +105,7 @@ def _video_filter_for_segment(
             f"d=1:s={output_width}x{output_height}:fps={fps}"
         )
 
-    if ass_path is not None:
+    if ass_path is not None and _ffmpeg_has_filter("subtitles"):
         escaped = str(ass_path).replace("\\", "/").replace(":", r"\:").replace("'", r"\'")
         source_filters.append(f"subtitles=filename='{escaped}'")
 
@@ -168,7 +185,7 @@ def render_clean_cut(
                 f"d=1:s={plan.output_width}x{plan.output_height}:fps={plan.fps}"
             )
 
-        if ass_path is not None:
+        if ass_path is not None and _ffmpeg_has_filter("subtitles"):
             escaped = str(ass_path).replace("\\", "/").replace(":", r"\:").replace("'", r"\'")
             video_filters.append(f"subtitles=filename='{escaped}'")
 
