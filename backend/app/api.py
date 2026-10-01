@@ -16,6 +16,7 @@ from backend.app.services.renderer import render_clean_cut
 from backend.app.services.retakes import find_retakes
 from backend.app.services.transcript_utils import normalize_whisperx
 from backend.app.services.transcription import transcribe
+from backend.app.services.visual_compositor import render_visual_master
 
 
 router = APIRouter()
@@ -271,27 +272,66 @@ def render_project(project_id: str) -> dict:
                 height=plan.output_height,
             )
 
+        visual_stats = {
+            "captions_rendered": 0,
+            "broll_cues_total": 0,
+            "broll_assets_found": 0,
+            "broll_assets_missing": 0,
+            "assets_used": [],
+        }
+
+        render_source = source_video
+        render_duration = duration
+
+        if transcript_path.exists():
+            write_progress(
+                project_dir,
+                stage="visual_compositing",
+                percent=87,
+                message="Adding captions and technology B-roll",
+            )
+
+            visual_master = project_dir / "visual_master.mp4"
+            visual_stats = render_visual_master(
+                source_video=source_video,
+                output_path=visual_master,
+                plan=plan,
+                transcript=transcript,
+                project_dir=project_dir,
+            )
+
+            render_source = visual_master
+            visual_metadata = probe_video(visual_master)
+            render_duration = float(visual_metadata["format"]["duration"])
+
         write_progress(
             project_dir,
             stage="rendering",
-            percent=90,
-            message="Rendering smooth cuts and transitions",
+            percent=94,
+            message="Applying clean cuts and smooth transitions",
         )
 
+        clean_plan = plan.model_copy(deep=True)
+        clean_plan.zooms = []
+        clean_plan.text_overlays = []
+        clean_plan.broll = []
+        clean_plan.motion_graphics = []
+        clean_plan.chapters = []
+
         render_clean_cut(
-            source_video=source_video,
+            source_video=render_source,
             output_path=output_path,
-            duration=duration,
-            plan=plan,
-            ass_path=ass_path,
-            transcript=transcript if transcript_path.exists() else None,
+            duration=render_duration,
+            plan=clean_plan,
+            ass_path=None,
+            transcript=None,
         )
 
         write_progress(
             project_dir,
             stage="complete",
             percent=100,
-            message="Video render complete",
+            message="Premium video render complete",
             state="completed",
         )
 
@@ -299,6 +339,7 @@ def render_project(project_id: str) -> dict:
             "project_id": project_id,
             "status": "rendered",
             "output": str(output_path),
+            "visuals": visual_stats,
         }
 
     except Exception as exc:
