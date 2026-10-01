@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from backend.app.schemas.edit_plan import EditPlan, TimeRange
+from backend.app.services.premium_graphics import zoompan_expression
 
 
 class RenderError(RuntimeError):
@@ -72,9 +73,31 @@ def _video_filter_for_segment(
     fps: int,
     output_width: int,
     output_height: int,
+    plan: EditPlan,
+    ass_path: Path | None,
 ) -> str:
+    source_filters: list[str] = []
+
+    zoom_expr = zoompan_expression(plan)
+    if zoom_expr:
+        source_filters.append(
+            "zoompan="
+            f"z='{zoom_expr}':"
+            "x='iw/2-(iw/zoom/2)':"
+            "y='ih/2-(ih/zoom/2)':"
+            f"d=1:s={output_width}x{output_height}:fps={fps}"
+        )
+
+    if ass_path is not None:
+        escaped = str(ass_path).replace("\\", "/").replace(":", r"\:").replace("'", r"\'")
+        source_filters.append(f"subtitles=filename='{escaped}'")
+
+    source_prefix = ",".join(source_filters)
+    if source_prefix:
+        source_prefix += ","
+
     base = (
-        f"[0:v]trim=start={segment.start}:end={segment.end},"
+        f"[0:v]{source_prefix}trim=start={segment.start}:end={segment.end},"
         f"setpts=PTS-STARTPTS,fps={fps},settb=AVTB,setsar=1"
     )
 
@@ -116,6 +139,7 @@ def render_clean_cut(
     output_path: Path,
     duration: float,
     plan: EditPlan,
+    ass_path: Path | None = None,
 ) -> Path:
     segments = _build_keep_segments(duration, plan.cuts)
 
@@ -131,20 +155,45 @@ def render_clean_cut(
             "-y",
             "-i",
             str(source_video),
-            "-c:v",
-            "libx264",
-            "-preset",
-            "fast",
-            "-crf",
-            "18",
-            "-c:a",
-            "aac",
-            "-b:a",
-            "192k",
-            "-movflags",
-            "+faststart",
-            str(output_path),
         ]
+
+        video_filters: list[str] = []
+        zoom_expr = zoompan_expression(plan)
+        if zoom_expr:
+            video_filters.append(
+                "zoompan="
+                f"z='{zoom_expr}':"
+                "x='iw/2-(iw/zoom/2)':"
+                "y='ih/2-(ih/zoom/2)':"
+                f"d=1:s={plan.output_width}x{plan.output_height}:fps={plan.fps}"
+            )
+
+        if ass_path is not None:
+            escaped = str(ass_path).replace("\\", "/").replace(":", r"\:").replace("'", r"\'")
+            video_filters.append(f"subtitles=filename='{escaped}'")
+
+        if video_filters:
+            command.extend(["-vf", ",".join(video_filters)])
+
+        command.extend(
+            [
+                "-af",
+                "loudnorm=I=-14:TP=-1.5:LRA=11",
+                "-c:v",
+                "libx264",
+                "-preset",
+                "fast",
+                "-crf",
+                "18",
+                "-c:a",
+                "aac",
+                "-b:a",
+                "192k",
+                "-movflags",
+                "+faststart",
+                str(output_path),
+            ]
+        )
         _execute(command)
         return output_path
 
@@ -158,6 +207,8 @@ def render_clean_cut(
                 plan.fps,
                 plan.output_width,
                 plan.output_height,
+                plan,
+                ass_path,
             )
         )
         filter_parts.append(_audio_filter_for_segment(i, segment))
@@ -210,6 +261,11 @@ def render_clean_cut(
         video_label = next_video
         audio_label = next_audio
 
+    final_audio_label = "outa_norm"
+    filter_parts.append(
+        f"[{audio_label}]loudnorm=I=-14:TP=-1.5:LRA=11[{final_audio_label}]"
+    )
+
     command = [
         "ffmpeg",
         "-y",
@@ -220,7 +276,7 @@ def render_clean_cut(
         "-map",
         f"[{video_label}]",
         "-map",
-        f"[{audio_label}]",
+        f"[{final_audio_label}]",
         "-c:v",
         "libx264",
         "-preset",
