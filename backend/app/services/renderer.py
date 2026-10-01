@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from backend.app.schemas.edit_plan import EditPlan, TimeRange
-from backend.app.services.premium_graphics import zoompan_expression
+from backend.app.services.premium_graphics import build_drawtext_filters, zoompan_expression
 
 
 class RenderError(RuntimeError):
@@ -92,10 +92,11 @@ def _video_filter_for_segment(
     output_height: int,
     plan: EditPlan,
     ass_path: Path | None,
+    transcript: dict | None,
 ) -> str:
     source_filters: list[str] = []
 
-    zoom_expr = zoompan_expression(plan)
+    zoom_expr = zoompan_expression(plan, fps=fps)
     if zoom_expr:
         source_filters.append(
             "zoompan="
@@ -105,7 +106,9 @@ def _video_filter_for_segment(
             f"d=1:s={output_width}x{output_height}:fps={fps}"
         )
 
-    if ass_path is not None and _ffmpeg_has_filter("subtitles"):
+    if transcript and _ffmpeg_has_filter("drawtext"):
+        source_filters.extend(build_drawtext_filters(transcript, plan))
+    elif ass_path is not None and _ffmpeg_has_filter("subtitles"):
         escaped = str(ass_path).replace("\\", "/").replace(":", r"\:").replace("'", r"\'")
         source_filters.append(f"subtitles=filename='{escaped}'")
 
@@ -157,6 +160,7 @@ def render_clean_cut(
     duration: float,
     plan: EditPlan,
     ass_path: Path | None = None,
+    transcript: dict | None = None,
 ) -> Path:
     segments = _build_keep_segments(duration, plan.cuts)
 
@@ -175,7 +179,7 @@ def render_clean_cut(
         ]
 
         video_filters: list[str] = []
-        zoom_expr = zoompan_expression(plan)
+        zoom_expr = zoompan_expression(plan, fps=plan.fps)
         if zoom_expr:
             video_filters.append(
                 "zoompan="
@@ -185,7 +189,9 @@ def render_clean_cut(
                 f"d=1:s={plan.output_width}x{plan.output_height}:fps={plan.fps}"
             )
 
-        if ass_path is not None and _ffmpeg_has_filter("subtitles"):
+        if transcript and _ffmpeg_has_filter("drawtext"):
+            video_filters.extend(build_drawtext_filters(transcript, plan))
+        elif ass_path is not None and _ffmpeg_has_filter("subtitles"):
             escaped = str(ass_path).replace("\\", "/").replace(":", r"\:").replace("'", r"\'")
             video_filters.append(f"subtitles=filename='{escaped}'")
 
@@ -226,6 +232,7 @@ def render_clean_cut(
                 plan.output_height,
                 plan,
                 ass_path,
+                transcript,
             )
         )
         filter_parts.append(_audio_filter_for_segment(i, segment))
