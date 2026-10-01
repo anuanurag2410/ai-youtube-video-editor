@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from backend.app.schemas.edit_plan import EditPlan, TimeRange
+from backend.app.schemas.edit_plan import CutTransition, EditPlan, TimeRange
 
 
 def silence_to_cuts(
@@ -13,7 +13,9 @@ def silence_to_cuts(
     """
     Shorten long silences without eliminating natural breathing room.
 
-    A 2.0s silence with keep_pause=0.35 removes ~1.65s from the middle.
+    V2 also attaches a subtle transition policy to every generated cut:
+    - ~90ms visual/audio blend
+    - subtle post-cut punch-in
     """
     cuts: list[TimeRange] = []
 
@@ -32,6 +34,12 @@ def silence_to_cuts(
                     start=start,
                     end=end,
                     reason="long_silence",
+                    transition=CutTransition(
+                        type="smooth",
+                        duration=0.09,
+                        visual_fix="punch_in",
+                        scale=1.04,
+                    ),
                 )
             )
 
