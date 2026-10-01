@@ -35,28 +35,6 @@ def _font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont | ImageFont.I
     return ImageFont.load_default()
 
 
-def _wrap_words(text: str, max_chars: int = 38, max_lines: int = 2) -> str:
-    words = (text or "").strip().split()
-    lines: list[str] = []
-    current: list[str] = []
-
-    for word in words:
-        trial = " ".join(current + [word])
-        if current and len(trial) > max_chars:
-            lines.append(" ".join(current))
-            current = [word]
-        else:
-            current.append(word)
-
-        if len(lines) >= max_lines:
-            break
-
-    if current and len(lines) < max_lines:
-        lines.append(" ".join(current))
-
-    return "\n".join(lines[:max_lines])
-
-
 def _technology_name(slug: str) -> str:
     mapping = {
         "databricks": "Databricks",
@@ -103,99 +81,115 @@ def _technology_name(slug: str) -> str:
     return mapping.get(slug, slug.replace("-", " ").title())
 
 
-def _caption_card(text: str, path: Path) -> Path:
-    text = _wrap_words(text, max_chars=42, max_lines=2)
-    if not text:
-        text = " "
+def _asset_kind(source: Path) -> str:
+    stem = source.stem.lower()
+    if stem == "logo" or "logo" in stem:
+        return "logo"
+    if stem in {"ui", "screenshot"} or "screen" in stem:
+        return "ui"
+    if stem == "diagram" or "arch" in stem or "diagram" in stem:
+        return "diagram"
+    return "broll"
 
-    font = _font(58, bold=True)
-    canvas = Image.new("RGBA", (1500, 220), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(canvas)
 
-    bbox = draw.multiline_textbbox((0, 0), text, font=font, spacing=8, align="center")
-    text_w = bbox[2] - bbox[0]
-    text_h = bbox[3] - bbox[1]
+def _make_glass_card(source: Path, slug: str, path: Path) -> tuple[Path, str]:
+    kind = _asset_kind(source)
+    is_logo = kind == "logo"
 
-    card_w = min(1450, text_w + 100)
-    card_h = min(205, text_h + 52)
-    x0 = (1500 - card_w) // 2
-    y0 = (220 - card_h) // 2
+    if is_logo:
+        canvas_size = (720, 420)
+        image_box = (500, 250)
+        label_y = 345
+        radius = 34
+    else:
+        canvas_size = (1120, 690)
+        image_box = (1000, 535)
+        label_y = 615
+        radius = 38
 
-    shadow = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
-    sd = ImageDraw.Draw(shadow)
-    sd.rounded_rectangle(
-        (x0 + 4, y0 + 7, x0 + card_w + 4, y0 + card_h + 7),
-        radius=28,
-        fill=(0, 0, 0, 150),
+    card = Image.new("RGBA", canvas_size, (0, 0, 0, 0))
+    w, h = canvas_size
+
+    shadow = Image.new("RGBA", canvas_size, (0, 0, 0, 0))
+    shadow_draw = ImageDraw.Draw(shadow)
+    shadow_draw.rounded_rectangle(
+        (34, 38, w - 18, h - 16),
+        radius=radius,
+        fill=(0, 0, 0, 155),
     )
-    shadow = shadow.filter(ImageFilter.GaussianBlur(8))
-    canvas.alpha_composite(shadow)
-
-    draw = ImageDraw.Draw(canvas)
-    draw.rounded_rectangle(
-        (x0, y0, x0 + card_w, y0 + card_h),
-        radius=28,
-        fill=(10, 13, 18, 218),
-        outline=(255, 255, 255, 34),
-        width=2,
-    )
-
-    tx = 750
-    ty = y0 + (card_h - text_h) / 2 - 3
-    draw.multiline_text(
-        (tx, ty),
-        text,
-        font=font,
-        fill=(255, 255, 255, 255),
-        anchor="ma",
-        spacing=8,
-        align="center",
-    )
-
-    path.parent.mkdir(parents=True, exist_ok=True)
-    canvas.save(path)
-    return path
-
-
-def _broll_card(source: Path, slug: str, path: Path) -> Path:
-    card = Image.new("RGBA", (820, 500), (0, 0, 0, 0))
-
-    shadow = Image.new("RGBA", card.size, (0, 0, 0, 0))
-    sd = ImageDraw.Draw(shadow)
-    sd.rounded_rectangle((25, 30, 795, 480), radius=34, fill=(0, 0, 0, 155))
-    shadow = shadow.filter(ImageFilter.GaussianBlur(14))
+    shadow = shadow.filter(ImageFilter.GaussianBlur(18))
     card.alpha_composite(shadow)
 
     draw = ImageDraw.Draw(card)
     draw.rounded_rectangle(
-        (18, 18, 802, 468),
-        radius=34,
-        fill=(248, 249, 252, 245),
-        outline=(255, 255, 255, 90),
-        width=2,
+        (20, 20, w - 28, h - 28),
+        radius=radius,
+        fill=(247, 249, 252, 246),
+        outline=(255, 255, 255, 155),
+        width=3,
+    )
+
+    # A faint top highlight gives the card a glass/premium feel.
+    draw.rounded_rectangle(
+        (28, 28, w - 36, 72),
+        radius=20,
+        fill=(255, 255, 255, 55),
     )
 
     try:
         image = Image.open(source).convert("RGBA")
-        fitted = ImageOps.contain(image, (700, 350), method=Image.Resampling.LANCZOS)
 
-        if source.stem.lower() == "logo":
-            max_logo = ImageOps.contain(fitted, (430, 260), method=Image.Resampling.LANCZOS)
-            fitted = max_logo
+        if is_logo:
+            fitted = ImageOps.contain(
+                image,
+                image_box,
+                method=Image.Resampling.LANCZOS,
+            )
+        else:
+            # Screenshots/diagrams get a larger presentation and a soft inner frame.
+            preview_bg = Image.new("RGBA", (1020, 555), (236, 239, 245, 255))
+            preview_draw = ImageDraw.Draw(preview_bg)
+            preview_draw.rounded_rectangle(
+                (0, 0, 1019, 554),
+                radius=24,
+                fill=(236, 239, 245, 255),
+                outline=(215, 220, 230, 255),
+                width=2,
+            )
+            fitted = ImageOps.contain(
+                image,
+                image_box,
+                method=Image.Resampling.LANCZOS,
+            )
+            px = (1020 - fitted.width) // 2
+            py = (555 - fitted.height) // 2
+            preview_bg.alpha_composite(fitted, (px, py))
+            fitted = preview_bg
 
-        ix = (820 - fitted.width) // 2
-        iy = 45 + (330 - fitted.height) // 2
+        ix = (w - fitted.width) // 2
+        if is_logo:
+            iy = 55 + (245 - fitted.height) // 2
+        else:
+            iy = 45
+
         card.alpha_composite(fitted, (ix, iy))
     except Exception:
         pass
 
     label = _technology_name(slug)
-    font = _font(36, bold=True)
-    draw.text((410, 415), label, font=font, fill=(24, 29, 39, 255), anchor="mm")
+    font = _font(36 if is_logo else 34, bold=True)
+    draw = ImageDraw.Draw(card)
+    draw.text(
+        (w // 2, label_y),
+        label,
+        font=font,
+        fill=(24, 29, 39, 255),
+        anchor="mm",
+    )
 
     path.parent.mkdir(parents=True, exist_ok=True)
     card.save(path)
-    return path
+    return path, kind
 
 
 def _execute(command: list[str]) -> None:
@@ -205,42 +199,67 @@ def _execute(command: list[str]) -> None:
         raise VisualCompositorError(exc.stderr.strip() or "Visual composition failed") from exc
 
 
-def _overlay_chain(
+def _premium_overlay_chain(
     current_label: str,
     input_index: int,
     overlay_index: int,
     start: float,
     end: float,
-    width: int,
-    x_expr: str,
-    y_expr: str,
-    fade_duration: float = 0.24,
+    kind: str,
+    fps: int,
 ) -> tuple[list[str], str]:
-    duration = max(0.6, end - start)
-    fade = min(fade_duration, duration / 3)
-    fade_out = max(fade, duration - fade)
+    duration = max(1.4, end - start)
+    fade = min(0.28, duration / 4)
+    fade_out_start = max(fade, duration - fade)
+
+    if kind == "logo":
+        width = 560
+        target_x = "W-w-72"
+        target_y = "92"
+        zoom_limit = 1.035
+        zoom_step = 0.00045
+        slide_px = 300
+    else:
+        width = 900
+        target_x = "W-w-60"
+        target_y = "(H-h)/2-10"
+        zoom_limit = 1.045
+        zoom_step = 0.00035
+        slide_px = 420
 
     asset_label = f"ov{overlay_index}"
     next_label = f"mix{overlay_index}"
 
-    filters = [
-        (
-            f"[{input_index}:v]"
-            f"scale={width}:-2:force_original_aspect_ratio=decrease,"
-            "format=rgba,"
-            f"fade=t=in:st=0:d={fade:.3f}:alpha=1,"
-            f"fade=t=out:st={fade_out:.3f}:d={fade:.3f}:alpha=1,"
-            f"setpts=PTS-STARTPTS+{start:.3f}/TB[{asset_label}]"
-        ),
-        (
-            f"[{current_label}][{asset_label}]"
-            f"overlay=x='{x_expr}':y='{y_expr}':"
-            f"enable='between(t,{start:.3f},{end:.3f})':"
-            f"eof_action=pass:shortest=0[{next_label}]"
-        ),
-    ]
+    # Small Ken Burns movement on the card itself.
+    card_filter = (
+        f"[{input_index}:v]"
+        f"scale={width}:-2:force_original_aspect_ratio=decrease,"
+        "format=rgba,"
+        f"zoompan=z='min(zoom+{zoom_step:.6f},{zoom_limit:.4f})':"
+        "x='iw/2-(iw/zoom/2)':"
+        "y='ih/2-(ih/zoom/2)':"
+        f"d=1:s={width}x-2:fps={fps},"
+        f"fade=t=in:st=0:d={fade:.3f}:alpha=1,"
+        f"fade=t=out:st={fade_out_start:.3f}:d={fade:.3f}:alpha=1,"
+        f"setpts=PTS-STARTPTS+{start:.3f}/TB[{asset_label}]"
+    )
 
-    return filters, next_label
+    # Slide from the right for ~0.35s and then add a tiny floating drift.
+    x_expr = (
+        f"({target_x})+"
+        f"max(0,({start + 0.35:.3f}-t)*{slide_px / 0.35:.3f})+"
+        f"8*sin((t-{start:.3f})*1.15)"
+    )
+    y_expr = f"({target_y})+4*sin((t-{start:.3f})*0.85)"
+
+    overlay_filter = (
+        f"[{current_label}][{asset_label}]"
+        f"overlay=x='{x_expr}':y='{y_expr}':"
+        f"enable='between(t,{start:.3f},{end:.3f})':"
+        f"eof_action=pass:shortest=0[{next_label}]"
+    )
+
+    return [card_filter, overlay_filter], next_label
 
 
 def render_visual_master(
@@ -255,31 +274,7 @@ def render_visual_master(
     generated_dir = project_dir / "generated_visuals"
     generated_dir.mkdir(parents=True, exist_ok=True)
 
-    captions: list[dict] = []
-    for index, segment in enumerate(transcript.get("segments", [])):
-        start = segment.get("start")
-        end = segment.get("end")
-        text = (segment.get("text") or "").strip()
-
-        if start is None or end is None or not text:
-            continue
-
-        # Avoid cards that flash too quickly.
-        start_f = float(start)
-        end_f = max(float(end), start_f + 0.85)
-
-        card = _caption_card(
-            text,
-            generated_dir / f"caption_{index:04d}.png",
-        )
-        captions.append(
-            {
-                "path": card,
-                "start": start_f,
-                "end": end_f,
-            }
-        )
-
+    # Captions are intentionally excluded here. The user adds them later in Premiere Pro.
     resolved_broll = resolve_broll_cues(plan, technology_root)
     broll: list[dict] = []
 
@@ -287,7 +282,7 @@ def render_visual_master(
         if not cue["found"]:
             continue
 
-        card = _broll_card(
+        card, kind = _make_glass_card(
             cue["path"],
             cue["slug"],
             generated_dir / f"broll_{index:03d}_{cue['slug']}.png",
@@ -297,20 +292,23 @@ def render_visual_master(
             {
                 **cue,
                 "card": card,
+                "kind": kind,
             }
         )
 
     command = ["ffmpeg", "-y", "-i", str(source_video)]
 
-    overlay_specs: list[dict] = []
-
-    for caption in captions:
-        command.extend(["-loop", "1", "-framerate", str(plan.fps), "-i", str(caption["path"])])
-        overlay_specs.append({"type": "caption", **caption})
-
     for cue in broll:
-        command.extend(["-loop", "1", "-framerate", str(plan.fps), "-i", str(cue["card"])])
-        overlay_specs.append({"type": "broll", **cue})
+        command.extend(
+            [
+                "-loop",
+                "1",
+                "-framerate",
+                str(plan.fps),
+                "-i",
+                str(cue["card"]),
+            ]
+        )
 
     base_filters = [
         f"scale={plan.output_width}:{plan.output_height}:force_original_aspect_ratio=decrease",
@@ -335,42 +333,44 @@ def render_visual_master(
 
     current = "base0"
 
-    for idx, spec in enumerate(overlay_specs, start=1):
-        if spec["type"] == "caption":
-            overlay_filters, current = _overlay_chain(
-                current_label=current,
-                input_index=idx,
-                overlay_index=idx,
-                start=float(spec["start"]),
-                end=float(spec["end"]),
-                width=1350,
-                x_expr="(W-w)/2",
-                y_expr="H-h-55",
-                fade_duration=0.16,
-            )
-        else:
-            overlay_filters, current = _overlay_chain(
-                current_label=current,
-                input_index=idx,
-                overlay_index=idx,
-                start=float(spec["start"]),
-                end=float(spec["end"]),
-                width=690,
-                x_expr="W-w-70",
-                y_expr="85",
-                fade_duration=0.28,
-            )
-
+    for idx, cue in enumerate(broll, start=1):
+        overlay_filters, current = _premium_overlay_chain(
+            current_label=current,
+            input_index=idx,
+            overlay_index=idx,
+            start=float(cue["start"]),
+            end=float(cue["end"]),
+            kind=cue["kind"],
+            fps=plan.fps,
+        )
         filter_parts.extend(overlay_filters)
+
+    if broll:
+        command.extend(
+            [
+                "-filter_complex",
+                ";".join(filter_parts),
+                "-map",
+                f"[{current}]",
+                "-map",
+                "0:a?",
+            ]
+        )
+    else:
+        # Still apply smart zooms even if there are no local B-roll assets.
+        command.extend(
+            [
+                "-vf",
+                ",".join(base_filters),
+                "-map",
+                "0:v",
+                "-map",
+                "0:a?",
+            ]
+        )
 
     command.extend(
         [
-            "-filter_complex",
-            ";".join(filter_parts),
-            "-map",
-            f"[{current}]",
-            "-map",
-            "0:a?",
             "-c:v",
             "libx264",
             "-preset",
@@ -392,7 +392,7 @@ def render_visual_master(
 
     return {
         "output": str(output_path),
-        "captions_rendered": len(captions),
+        "captions_rendered": 0,
         "broll_cues_total": len(resolved_broll),
         "broll_assets_found": len(broll),
         "broll_assets_missing": len(resolved_broll) - len(broll),
@@ -401,6 +401,7 @@ def render_visual_master(
                 "technology": cue["slug"],
                 "file": str(cue["path"]),
                 "requested_stem": cue["requested_stem"],
+                "kind": cue["kind"],
             }
             for cue in broll
         ],
