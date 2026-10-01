@@ -1,0 +1,689 @@
+{
+  "version": "1.0",
+  "root": "assets/technologies",
+  "fallback_order": [
+    "logo.png",
+    "ui.png",
+    "diagram.png",
+    "broll.png"
+  ],
+  "standard_assets": {
+    "logo.png": "Transparent PNG logo, ideally square or wide with transparent background",
+    "ui.png": "Clean product UI/workspace screenshot",
+    "diagram.png": "Architecture/process/concept diagram",
+    "broll.png": "Optional generic visual or screenshot used as B-roll"
+  },
+  "technologies": [
+    {
+      "slug": "databricks",
+      "name": "Databricks",
+      "category": "platform",
+      "keywords": [
+        "databricks",
+        "unity catalog",
+        "auto loader",
+        "jobs",
+        "workflows",
+        "notebook",
+        "cluster"
+      ],
+      "path": "assets/technologies/databricks",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "spark",
+      "name": "Apache Spark",
+      "category": "processing",
+      "keywords": [
+        "apache spark",
+        "spark",
+        "spark sql",
+        "rdd",
+        "dataframe"
+      ],
+      "path": "assets/technologies/spark",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "pyspark",
+      "name": "PySpark",
+      "category": "processing",
+      "keywords": [
+        "pyspark",
+        "spark python"
+      ],
+      "path": "assets/technologies/pyspark",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "delta-lake",
+      "name": "Delta Lake",
+      "category": "lakehouse",
+      "keywords": [
+        "delta lake",
+        "delta table",
+        "time travel",
+        "merge",
+        "optimize",
+        "vacuum"
+      ],
+      "path": "assets/technologies/delta-lake",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "python",
+      "name": "Python",
+      "category": "language",
+      "keywords": [
+        "python"
+      ],
+      "path": "assets/technologies/python",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "pandas",
+      "name": "Pandas",
+      "category": "processing",
+      "keywords": [
+        "pandas",
+        "dataframe"
+      ],
+      "path": "assets/technologies/pandas",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "sql",
+      "name": "SQL",
+      "category": "language",
+      "keywords": [
+        "sql",
+        "query",
+        "joins",
+        "window function",
+        "cte"
+      ],
+      "path": "assets/technologies/sql",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "kafka",
+      "name": "Apache Kafka",
+      "category": "streaming",
+      "keywords": [
+        "kafka",
+        "topic",
+        "partition",
+        "consumer",
+        "producer"
+      ],
+      "path": "assets/technologies/kafka",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "airflow",
+      "name": "Apache Airflow",
+      "category": "orchestration",
+      "keywords": [
+        "airflow",
+        "dag",
+        "scheduler"
+      ],
+      "path": "assets/technologies/airflow",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "dbt",
+      "name": "dbt",
+      "category": "transformation",
+      "keywords": [
+        "dbt",
+        "data build tool"
+      ],
+      "path": "assets/technologies/dbt",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "snowflake",
+      "name": "Snowflake",
+      "category": "warehouse",
+      "keywords": [
+        "snowflake",
+        "warehouse",
+        "snowpark"
+      ],
+      "path": "assets/technologies/snowflake",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "bigquery",
+      "name": "BigQuery",
+      "category": "warehouse",
+      "keywords": [
+        "bigquery",
+        "bq",
+        "google bigquery"
+      ],
+      "path": "assets/technologies/bigquery",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "redshift",
+      "name": "Amazon Redshift",
+      "category": "warehouse",
+      "keywords": [
+        "redshift",
+        "amazon redshift"
+      ],
+      "path": "assets/technologies/redshift",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "synapse",
+      "name": "Azure Synapse",
+      "category": "warehouse",
+      "keywords": [
+        "synapse",
+        "azure synapse"
+      ],
+      "path": "assets/technologies/synapse",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "s3",
+      "name": "Amazon S3",
+      "category": "storage",
+      "keywords": [
+        "s3",
+        "amazon s3"
+      ],
+      "path": "assets/technologies/s3",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "adls",
+      "name": "Azure Data Lake Storage",
+      "category": "storage",
+      "keywords": [
+        "adls",
+        "azure data lake storage",
+        "data lake gen2"
+      ],
+      "path": "assets/technologies/adls",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "gcs",
+      "name": "Google Cloud Storage",
+      "category": "storage",
+      "keywords": [
+        "gcs",
+        "google cloud storage"
+      ],
+      "path": "assets/technologies/gcs",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "adf",
+      "name": "Azure Data Factory",
+      "category": "ingestion",
+      "keywords": [
+        "adf",
+        "azure data factory",
+        "data factory"
+      ],
+      "path": "assets/technologies/adf",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "aws-glue",
+      "name": "AWS Glue",
+      "category": "ingestion",
+      "keywords": [
+        "aws glue",
+        "glue job",
+        "glue crawler"
+      ],
+      "path": "assets/technologies/aws-glue",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "unity-catalog",
+      "name": "Unity Catalog",
+      "category": "governance",
+      "keywords": [
+        "unity catalog",
+        "uc",
+        "catalog",
+        "external location",
+        "storage credential"
+      ],
+      "path": "assets/technologies/unity-catalog",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "iceberg",
+      "name": "Apache Iceberg",
+      "category": "lakehouse",
+      "keywords": [
+        "iceberg",
+        "apache iceberg"
+      ],
+      "path": "assets/technologies/iceberg",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "hudi",
+      "name": "Apache Hudi",
+      "category": "lakehouse",
+      "keywords": [
+        "hudi",
+        "apache hudi"
+      ],
+      "path": "assets/technologies/hudi",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "flink",
+      "name": "Apache Flink",
+      "category": "streaming",
+      "keywords": [
+        "flink",
+        "apache flink"
+      ],
+      "path": "assets/technologies/flink",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "hadoop",
+      "name": "Apache Hadoop",
+      "category": "big-data",
+      "keywords": [
+        "hadoop",
+        "mapreduce"
+      ],
+      "path": "assets/technologies/hadoop",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "hive",
+      "name": "Apache Hive",
+      "category": "big-data",
+      "keywords": [
+        "hive",
+        "hive metastore",
+        "hql"
+      ],
+      "path": "assets/technologies/hive",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "hdfs",
+      "name": "HDFS",
+      "category": "storage",
+      "keywords": [
+        "hdfs",
+        "hadoop distributed file system"
+      ],
+      "path": "assets/technologies/hdfs",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "teradata",
+      "name": "Teradata",
+      "category": "warehouse",
+      "keywords": [
+        "teradata",
+        "tdch"
+      ],
+      "path": "assets/technologies/teradata",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "postgresql",
+      "name": "PostgreSQL",
+      "category": "database",
+      "keywords": [
+        "postgresql",
+        "postgres"
+      ],
+      "path": "assets/technologies/postgresql",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "mysql",
+      "name": "MySQL",
+      "category": "database",
+      "keywords": [
+        "mysql"
+      ],
+      "path": "assets/technologies/mysql",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "docker",
+      "name": "Docker",
+      "category": "devops",
+      "keywords": [
+        "docker",
+        "container"
+      ],
+      "path": "assets/technologies/docker",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "kubernetes",
+      "name": "Kubernetes",
+      "category": "devops",
+      "keywords": [
+        "kubernetes",
+        "k8s"
+      ],
+      "path": "assets/technologies/kubernetes",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "git",
+      "name": "Git",
+      "category": "devops",
+      "keywords": [
+        "git",
+        "branch",
+        "commit"
+      ],
+      "path": "assets/technologies/git",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "github",
+      "name": "GitHub",
+      "category": "devops",
+      "keywords": [
+        "github",
+        "pull request",
+        "repository"
+      ],
+      "path": "assets/technologies/github",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "jenkins",
+      "name": "Jenkins",
+      "category": "devops",
+      "keywords": [
+        "jenkins",
+        "ci cd",
+        "pipeline"
+      ],
+      "path": "assets/technologies/jenkins",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "terraform",
+      "name": "Terraform",
+      "category": "devops",
+      "keywords": [
+        "terraform",
+        "infrastructure as code",
+        "iac"
+      ],
+      "path": "assets/technologies/terraform",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "aws",
+      "name": "AWS",
+      "category": "cloud",
+      "keywords": [
+        "aws",
+        "amazon web services"
+      ],
+      "path": "assets/technologies/aws",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "azure",
+      "name": "Microsoft Azure",
+      "category": "cloud",
+      "keywords": [
+        "azure",
+        "microsoft azure"
+      ],
+      "path": "assets/technologies/azure",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "gcp",
+      "name": "Google Cloud",
+      "category": "cloud",
+      "keywords": [
+        "gcp",
+        "google cloud"
+      ],
+      "path": "assets/technologies/gcp",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "mlflow",
+      "name": "MLflow",
+      "category": "mlops",
+      "keywords": [
+        "mlflow",
+        "experiment",
+        "model registry"
+      ],
+      "path": "assets/technologies/mlflow",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    },
+    {
+      "slug": "powerbi",
+      "name": "Power BI",
+      "category": "analytics",
+      "keywords": [
+        "power bi",
+        "powerbi"
+      ],
+      "path": "assets/technologies/powerbi",
+      "assets": [
+        "logo.png",
+        "ui.png",
+        "diagram.png",
+        "broll.png"
+      ]
+    }
+  ]
+}
