@@ -1,0 +1,22 @@
+{
+  "name": "Git",
+  "slug": "git",
+  "category": "devops",
+  "keywords": [
+    "git",
+    "branch",
+    "commit"
+  ],
+  "preferred_order": [
+    "logo.png",
+    "ui.png",
+    "diagram.png",
+    "broll.png"
+  ],
+  "recommended_assets": {
+    "logo": "logo.png",
+    "ui": "ui.png",
+    "diagram": "diagram.png",
+    "broll": "broll.png"
+  }
+}
