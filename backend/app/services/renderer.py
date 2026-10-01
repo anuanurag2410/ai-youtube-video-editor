@@ -66,10 +66,16 @@ def _safe_transition_duration(
     return max(0.0, min(requested, maximum))
 
 
-def _video_filter_for_segment(index: int, segment: KeepSegment, fps: int) -> str:
+def _video_filter_for_segment(
+    index: int,
+    segment: KeepSegment,
+    fps: int,
+    output_width: int,
+    output_height: int,
+) -> str:
     base = (
         f"[0:v]trim=start={segment.start}:end={segment.end},"
-        f"setpts=PTS-STARTPTS,fps={fps},settb=AVTB"
+        f"setpts=PTS-STARTPTS,fps={fps},settb=AVTB,setsar=1"
     )
 
     incoming = segment.incoming_cut
@@ -79,14 +85,23 @@ def _video_filter_for_segment(index: int, segment: KeepSegment, fps: int) -> str
         and incoming.transition.scale > 1.0
     ):
         scale = incoming.transition.scale
-        # Scale up and crop back to the pre-scale frame size. This creates
-        # a subtle center punch-in that makes a jump cut feel intentional.
+
+        # Create a subtle center punch-in. Rounding during scale/crop can
+        # produce dimensions a few pixels smaller than the source, so every
+        # segment is normalized to the exact output dimensions afterwards.
         base += (
-            f",scale=trunc(iw*{scale}/2)*2:trunc(ih*{scale}/2)*2,"
+            f",scale=ceil(iw*{scale}/2)*2:ceil(ih*{scale}/2)*2,"
             f"crop=trunc(iw/{scale}/2)*2:trunc(ih/{scale}/2)*2"
         )
 
-    return base + f",format=yuv420p[v{index}]"
+    # xfade requires both inputs to have identical dimensions, pixel format,
+    # SAR, frame rate and time base. Normalize every segment here.
+    base += (
+        f",scale={output_width}:{output_height}:flags=lanczos,"
+        f"setsar=1,format=yuv420p"
+    )
+
+    return base + f"[v{index}]"
 
 
 def _audio_filter_for_segment(index: int, segment: KeepSegment) -> str:
@@ -136,7 +151,15 @@ def render_clean_cut(
     filter_parts: list[str] = []
 
     for i, segment in enumerate(segments):
-        filter_parts.append(_video_filter_for_segment(i, segment, plan.fps))
+        filter_parts.append(
+            _video_filter_for_segment(
+                i,
+                segment,
+                plan.fps,
+                plan.output_width,
+                plan.output_height,
+            )
+        )
         filter_parts.append(_audio_filter_for_segment(i, segment))
 
     video_label = "v0"
