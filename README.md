@@ -100,11 +100,14 @@ See `.gitignore`.
 - [x] EditPlan schema
 - [x] FFmpeg audio extraction
 - [x] WhisperX service interface
-- [ ] silence-to-cut conversion
-- [ ] retake detection
-- [ ] clean-cut renderer
+- [x] silence-to-cut conversion
+- [x] retake candidate detection
+- [x] clean-cut renderer
 
 ### Milestone 2 — Premium renderer
+- [x] smooth visual cut blending
+- [x] short audio crossfades
+- [x] subtle punch-in masking after cuts
 - [ ] Remotion project
 - [ ] captions
 - [ ] smart zoom
