@@ -4,3 +4,4 @@ python-multipart>=0.0.9,<1
 pydantic>=2.8,<3
 pydantic-settings>=2.4,<3
 whisperx>=3.3
+Pillow>=10.4,<12\n
