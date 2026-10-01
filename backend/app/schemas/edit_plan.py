@@ -5,10 +5,18 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 
+class CutTransition(BaseModel):
+    type: Literal["smooth", "hard", "dissolve"] = "smooth"
+    duration: float = Field(default=0.09, ge=0.0, le=0.30)
+    visual_fix: Literal["none", "punch_in", "punch_out"] = "punch_in"
+    scale: float = Field(default=1.04, ge=1.0, le=1.12)
+
+
 class TimeRange(BaseModel):
     start: float = Field(ge=0)
     end: float = Field(gt=0)
     reason: str | None = None
+    transition: CutTransition = Field(default_factory=CutTransition)
 
 
 class ZoomDecision(BaseModel):
@@ -52,7 +60,7 @@ class Chapter(BaseModel):
 
 
 class EditPlan(BaseModel):
-    version: str = "1.0"
+    version: str = "2.0"
     source_video: str
     output_width: int = 1920
     output_height: int = 1080
