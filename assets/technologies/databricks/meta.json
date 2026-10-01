@@ -1,0 +1,26 @@
+{
+  "name": "Databricks",
+  "slug": "databricks",
+  "category": "platform",
+  "keywords": [
+    "databricks",
+    "unity catalog",
+    "auto loader",
+    "jobs",
+    "workflows",
+    "notebook",
+    "cluster"
+  ],
+  "preferred_order": [
+    "logo.png",
+    "ui.png",
+    "diagram.png",
+    "broll.png"
+  ],
+  "recommended_assets": {
+    "logo": "logo.png",
+    "ui": "ui.png",
+    "diagram": "diagram.png",
+    "broll": "broll.png"
+  }
+}
