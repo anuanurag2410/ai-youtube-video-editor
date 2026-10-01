@@ -8,6 +8,7 @@ from fastapi import APIRouter, HTTPException
 
 from backend.app.schemas.edit_plan import EditPlan
 from backend.app.services.media import probe_video
+from backend.app.services.progress import read_progress, write_progress
 from backend.app.services.renderer import render_clean_cut
 from backend.app.services.retakes import find_retakes
 from backend.app.services.transcript_utils import normalize_whisperx
@@ -40,6 +41,15 @@ def _source_video(project_id: str) -> Path:
     return matches[0]
 
 
+@router.get("/projects/{project_id}/status")
+def project_status(project_id: str) -> dict:
+    project_dir = _project_dir(project_id)
+    return {
+        "project_id": project_id,
+        **read_progress(project_dir),
+    }
+
+
 @router.post("/projects/{project_id}/transcribe")
 def transcribe_project(project_id: str) -> dict:
     project_dir = _project_dir(project_id)
@@ -49,8 +59,31 @@ def transcribe_project(project_id: str) -> dict:
         raise HTTPException(status_code=404, detail="Extracted audio not found")
 
     try:
+        write_progress(
+            project_dir,
+            stage="transcription",
+            percent=45,
+            message="Loading speech model and transcribing audio",
+        )
+
         raw = transcribe(audio_path)
+
+        write_progress(
+            project_dir,
+            stage="alignment",
+            percent=68,
+            message="Aligning words with precise timestamps",
+        )
+
         transcript = normalize_whisperx(raw)
+
+        write_progress(
+            project_dir,
+            stage="retake_analysis",
+            percent=78,
+            message="Checking transcript for retake candidates",
+        )
+
         retakes = find_retakes(transcript["segments"])
 
         transcript_path = project_dir / "transcript.json"
@@ -65,6 +98,13 @@ def transcribe_project(project_id: str) -> dict:
             encoding="utf-8",
         )
 
+        write_progress(
+            project_dir,
+            stage="transcription_complete",
+            percent=82,
+            message="Transcript analysis complete",
+        )
+
         return {
             "project_id": project_id,
             "language": transcript.get("language"),
@@ -75,6 +115,13 @@ def transcribe_project(project_id: str) -> dict:
         }
 
     except Exception as exc:
+        write_progress(
+            project_dir,
+            stage="transcription_failed",
+            percent=45,
+            message=str(exc),
+            state="failed",
+        )
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
@@ -88,6 +135,13 @@ def render_project(project_id: str) -> dict:
         raise HTTPException(status_code=404, detail="Edit plan not found")
 
     try:
+        write_progress(
+            project_dir,
+            stage="preparing_render",
+            percent=84,
+            message="Preparing premium cut render",
+        )
+
         plan = EditPlan.model_validate_json(
             edit_plan_path.read_text(encoding="utf-8")
         )
@@ -97,11 +151,26 @@ def render_project(project_id: str) -> dict:
 
         output_path = EXPORTS / f"{project_id}_clean.mp4"
 
+        write_progress(
+            project_dir,
+            stage="rendering",
+            percent=90,
+            message="Rendering smooth cuts and transitions",
+        )
+
         render_clean_cut(
             source_video=source_video,
             output_path=output_path,
             duration=duration,
             plan=plan,
+        )
+
+        write_progress(
+            project_dir,
+            stage="complete",
+            percent=100,
+            message="Video render complete",
+            state="completed",
         )
 
         return {
@@ -111,4 +180,11 @@ def render_project(project_id: str) -> dict:
         }
 
     except Exception as exc:
+        write_progress(
+            project_dir,
+            stage="render_failed",
+            percent=90,
+            message=str(exc),
+            state="failed",
+        )
         raise HTTPException(status_code=500, detail=str(exc)) from exc
