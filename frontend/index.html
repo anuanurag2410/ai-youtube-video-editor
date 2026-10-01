@@ -28,11 +28,17 @@
     .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
     .ok{color:var(--success)}
     .err{color:var(--danger)}\n    .badge{display:inline-flex;padding:6px 10px;border-radius:999px;background:#1b2330;border:1px solid #2c3950;color:#b8c7ff;font-size:12px;font-weight:700;margin-bottom:14px}
+    .summary{display:none}
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+    .metric{background:#0e1116;border:1px solid var(--border);border-radius:12px;padding:14px}
+    .metric strong{display:block;font-size:22px;margin-bottom:4px}
+    .metric span{color:var(--muted);font-size:12px}
+    @media(max-width:700px){.grid{grid-template-columns:1fr 1fr}}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="badge">V2 · PROGRESS UI</div>\n    <h1>AI YouTube Video Editor</h1>
+    <div class="badge">V3 · SMART EDIT DIRECTOR</div>\n    <h1>AI YouTube Video Editor</h1>
     <div class="sub">Upload → Transcribe → Export</div>
 
     <div class="card">
@@ -55,6 +61,22 @@
       <div class="actions"><button id="transcribeBtn" disabled>Start Transcription</button></div>
       <div class="bar"><div id="transcribeBar" class="fill"></div></div>
       <div class="meta"><span id="transcribeMsg">Upload a video first</span><span></span></div>
+    </div>
+
+    <div id="smartSummary" class="card summary">
+      <div class="row">
+        <div class="title">Smart Edit Plan</div>
+        <div class="status">Transcript-driven</div>
+      </div>
+      <div class="grid">
+        <div class="metric"><strong id="sumRetakes">0</strong><span>Retakes auto-removed</span></div>
+        <div class="metric"><strong id="sumZooms">0</strong><span>Smart zooms</span></div>
+        <div class="metric"><strong id="sumKeypoints">0</strong><span>Key-point overlays</span></div>
+        <div class="metric"><strong id="sumTech">0</strong><span>Technology B-roll cues</span></div>
+        <div class="metric"><strong id="sumMotion">0</strong><span>Motion graphics</span></div>
+        <div class="metric"><strong id="sumChapters">0</strong><span>Chapter candidates</span></div>
+      </div>
+      <div id="techList" class="project"></div>
     </div>
 
     <div class="card">
@@ -158,6 +180,20 @@ document.getElementById("transcribeBtn").onclick=async()=>{
     stopPolling();
     if(!r.ok) throw new Error(data.detail || "Transcription failed");
     setProgress("transcribe",100,"Transcription complete");
+
+    const s=data.smart_edit_summary || {};
+    document.getElementById("smartSummary").style.display="block";
+    document.getElementById("sumRetakes").textContent=s.retakes_auto_removed || 0;
+    document.getElementById("sumZooms").textContent=s.smart_zooms || 0;
+    document.getElementById("sumKeypoints").textContent=s.key_point_overlays || 0;
+    document.getElementById("sumTech").textContent=s.technology_broll || 0;
+    document.getElementById("sumMotion").textContent=s.motion_graphics || 0;
+    document.getElementById("sumChapters").textContent=s.chapters || 0;
+
+    const tech=s.technologies || {};
+    const techText=Object.entries(tech).map(([name,count])=>name+" × "+count).join("  •  ");
+    document.getElementById("techList").textContent=techText ? "Detected: "+techText : "No technology keywords detected in this clip.";
+
     document.getElementById("renderBtn").disabled=false;
     document.getElementById("renderMsg").textContent="Ready to export";
   }catch(e){
