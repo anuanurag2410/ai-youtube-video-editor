@@ -1,0 +1,24 @@
+{
+  "name": "Apache Spark",
+  "slug": "spark",
+  "category": "processing",
+  "keywords": [
+    "apache spark",
+    "spark",
+    "spark sql",
+    "rdd",
+    "dataframe"
+  ],
+  "preferred_order": [
+    "logo.png",
+    "ui.png",
+    "diagram.png",
+    "broll.png"
+  ],
+  "recommended_assets": {
+    "logo": "logo.png",
+    "ui": "ui.png",
+    "diagram": "diagram.png",
+    "broll": "broll.png"
+  }
+}
