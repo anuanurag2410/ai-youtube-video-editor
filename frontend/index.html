@@ -38,8 +38,8 @@
 </head>
 <body>
   <div class="wrap">
-    <div class="badge">V3 · SMART EDIT DIRECTOR</div>\n    <h1>AI YouTube Video Editor</h1>
-    <div class="sub">Upload → Transcribe → Export</div>
+    <div class="badge">V3 · PREMIUM VISUAL RENDERER</div>\n    <h1>AI YouTube Video Editor</h1>
+    <div class="sub">Upload → AI Analyze → Premium Visual Render</div>
 
     <div class="card">
       <div class="row">
@@ -214,7 +214,7 @@ document.getElementById("renderBtn").onclick=async()=>{
     const data=await r.json();
     stopPolling();
     if(!r.ok) throw new Error(data.detail || "Export failed");
-    setProgress("render",100,"Export complete: "+data.output);
+    setProgress("render",100,"Premium export complete: "+data.output);
   }catch(e){
     stopPolling();
     setProgress("render",0,e.message);
