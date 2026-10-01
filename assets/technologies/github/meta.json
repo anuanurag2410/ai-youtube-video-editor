@@ -1,0 +1,22 @@
+{
+  "name": "GitHub",
+  "slug": "github",
+  "category": "devops",
+  "keywords": [
+    "github",
+    "pull request",
+    "repository"
+  ],
+  "preferred_order": [
+    "logo.png",
+    "ui.png",
+    "diagram.png",
+    "broll.png"
+  ],
+  "recommended_assets": {
+    "logo": "logo.png",
+    "ui": "ui.png",
+    "diagram": "diagram.png",
+    "broll": "broll.png"
+  }
+}
