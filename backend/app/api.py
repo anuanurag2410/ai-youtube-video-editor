@@ -6,7 +6,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
 
-from backend.app.schemas.edit_plan import EditPlan
+from backend.app.schemas.edit_plan import CutTransition, EditPlan, TimeRange
 from backend.app.services.media import probe_video
 from backend.app.services.progress import read_progress, write_progress
 from backend.app.services.renderer import render_clean_cut
@@ -39,6 +39,85 @@ def _source_video(project_id: str) -> Path:
         raise HTTPException(status_code=404, detail="Source video not found")
 
     return matches[0]
+
+
+def _add_speech_boundary_cuts(
+    project_dir: Path,
+    project_id: str,
+    transcript: dict,
+    pre_roll: float = 0.25,
+    post_roll: float = 0.35,
+    minimum_dead_air: float = 0.60,
+) -> dict:
+    """Trim non-speaking lead-in/tail using transcript timing, not raw volume."""
+    segments = [
+        s for s in transcript.get("segments", [])
+        if s.get("start") is not None and s.get("end") is not None and (s.get("text") or "").strip()
+    ]
+
+    if not segments:
+        return {"leading_trim": 0.0, "trailing_trim": 0.0}
+
+    edit_plan_path = project_dir / "edit_plan.json"
+    if not edit_plan_path.exists():
+        return {"leading_trim": 0.0, "trailing_trim": 0.0}
+
+    plan = EditPlan.model_validate_json(edit_plan_path.read_text(encoding="utf-8"))
+    source_video = _source_video(project_id)
+    metadata = probe_video(source_video)
+    duration = float(metadata["format"]["duration"])
+
+    first_speech = float(segments[0]["start"])
+    last_speech = float(segments[-1]["end"])
+
+    leading_end = max(0.0, first_speech - pre_roll)
+    trailing_start = min(duration, last_speech + post_roll)
+
+    added = []
+
+    if leading_end >= minimum_dead_air:
+        added.append(
+            TimeRange(
+                start=0.0,
+                end=leading_end,
+                reason="leading_dead_air",
+                transition=CutTransition(
+                    type="hard",
+                    duration=0.0,
+                    visual_fix="none",
+                    scale=1.0,
+                ),
+            )
+        )
+
+    if duration - trailing_start >= minimum_dead_air:
+        added.append(
+            TimeRange(
+                start=trailing_start,
+                end=duration,
+                reason="trailing_dead_air",
+                transition=CutTransition(
+                    type="hard",
+                    duration=0.0,
+                    visual_fix="none",
+                    scale=1.0,
+                ),
+            )
+        )
+
+    if added:
+        existing = list(plan.cuts)
+        existing.extend(added)
+        plan.cuts = sorted(existing, key=lambda x: (x.start, x.end))
+        edit_plan_path.write_text(
+            json.dumps(plan.model_dump(), indent=2),
+            encoding="utf-8",
+        )
+
+    return {
+        "leading_trim": leading_end if leading_end >= minimum_dead_air else 0.0,
+        "trailing_trim": (duration - trailing_start) if duration - trailing_start >= minimum_dead_air else 0.0,
+    }
 
 
 @router.get("/projects/{project_id}/status")
@@ -85,6 +164,7 @@ def transcribe_project(project_id: str) -> dict:
         )
 
         retakes = find_retakes(transcript["segments"])
+        boundary_trims = _add_speech_boundary_cuts(project_dir, project_id, transcript)
 
         transcript_path = project_dir / "transcript.json"
         transcript_path.write_text(
@@ -111,6 +191,8 @@ def transcribe_project(project_id: str) -> dict:
             "segments": len(transcript["segments"]),
             "words": len(transcript["words"]),
             "retake_candidates": len(retakes),
+            "leading_dead_air_trimmed": boundary_trims["leading_trim"],
+            "trailing_dead_air_trimmed": boundary_trims["trailing_trim"],
             "transcript": str(transcript_path),
         }
 
