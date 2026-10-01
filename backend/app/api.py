@@ -9,6 +9,8 @@ from fastapi import APIRouter, HTTPException
 from backend.app.schemas.edit_plan import CutTransition, EditPlan, TimeRange
 from backend.app.services.media import probe_video
 from backend.app.services.progress import read_progress, write_progress
+from backend.app.services.captions import write_srt
+from backend.app.services.smart_director import enrich_edit_plan
 from backend.app.services.renderer import render_clean_cut
 from backend.app.services.retakes import find_retakes
 from backend.app.services.transcript_utils import normalize_whisperx
@@ -166,6 +168,27 @@ def transcribe_project(project_id: str) -> dict:
         retakes = find_retakes(transcript["segments"])
         boundary_trims = _add_speech_boundary_cuts(project_dir, project_id, transcript)
 
+        edit_plan_path = project_dir / "edit_plan.json"
+        plan = EditPlan.model_validate_json(
+            edit_plan_path.read_text(encoding="utf-8")
+        )
+        smart_summary = enrich_edit_plan(plan, transcript)
+        edit_plan_path.write_text(
+            json.dumps(plan.model_dump(), indent=2),
+            encoding="utf-8",
+        )
+
+        captions_path = write_srt(
+            transcript,
+            project_dir / "captions_raw.srt",
+        )
+
+        summary_path = project_dir / "edit_summary.json"
+        summary_path.write_text(
+            json.dumps(smart_summary, indent=2),
+            encoding="utf-8",
+        )
+
         transcript_path = project_dir / "transcript.json"
         transcript_path.write_text(
             json.dumps(transcript, indent=2),
@@ -193,6 +216,8 @@ def transcribe_project(project_id: str) -> dict:
             "retake_candidates": len(retakes),
             "leading_dead_air_trimmed": boundary_trims["leading_trim"],
             "trailing_dead_air_trimmed": boundary_trims["trailing_trim"],
+            "smart_edit_summary": smart_summary,
+            "captions": str(captions_path),
             "transcript": str(transcript_path),
         }
 
