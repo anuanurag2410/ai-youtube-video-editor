@@ -1,0 +1,25 @@
+{
+  "name": "Delta Lake",
+  "slug": "delta-lake",
+  "category": "lakehouse",
+  "keywords": [
+    "delta lake",
+    "delta table",
+    "time travel",
+    "merge",
+    "optimize",
+    "vacuum"
+  ],
+  "preferred_order": [
+    "logo.png",
+    "ui.png",
+    "diagram.png",
+    "broll.png"
+  ],
+  "recommended_assets": {
+    "logo": "logo.png",
+    "ui": "ui.png",
+    "diagram": "diagram.png",
+    "broll": "broll.png"
+  }
+}
