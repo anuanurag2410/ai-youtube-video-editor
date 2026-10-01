@@ -284,6 +284,7 @@ def render_project(project_id: str) -> dict:
             duration=duration,
             plan=plan,
             ass_path=ass_path,
+            transcript=transcript if transcript_path.exists() else None,
         )
 
         write_progress(
