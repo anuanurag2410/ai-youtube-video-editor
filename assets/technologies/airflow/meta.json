@@ -1,0 +1,22 @@
+{
+  "name": "Apache Airflow",
+  "slug": "airflow",
+  "category": "orchestration",
+  "keywords": [
+    "airflow",
+    "dag",
+    "scheduler"
+  ],
+  "preferred_order": [
+    "logo.png",
+    "ui.png",
+    "diagram.png",
+    "broll.png"
+  ],
+  "recommended_assets": {
+    "logo": "logo.png",
+    "ui": "ui.png",
+    "diagram": "diagram.png",
+    "broll": "broll.png"
+  }
+}
