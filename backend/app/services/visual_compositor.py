@@ -236,7 +236,7 @@ def _overlay_chain(
             f"[{current_label}][{asset_label}]"
             f"overlay=x='{x_expr}':y='{y_expr}':"
             f"enable='between(t,{start:.3f},{end:.3f})':"
-            f"eof_action=pass:shortest=1[{next_label}]"
+            f"eof_action=pass:shortest=0[{next_label}]"
         ),
     ]
 
