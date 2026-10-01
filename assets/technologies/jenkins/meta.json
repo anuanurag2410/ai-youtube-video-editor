@@ -1,0 +1,22 @@
+{
+  "name": "Jenkins",
+  "slug": "jenkins",
+  "category": "devops",
+  "keywords": [
+    "jenkins",
+    "ci cd",
+    "pipeline"
+  ],
+  "preferred_order": [
+    "logo.png",
+    "ui.png",
+    "diagram.png",
+    "broll.png"
+  ],
+  "recommended_assets": {
+    "logo": "logo.png",
+    "ui": "ui.png",
+    "diagram": "diagram.png",
+    "broll": "broll.png"
+  }
+}
