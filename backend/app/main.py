@@ -7,6 +7,7 @@ import uuid
 from pathlib import Path
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi.responses import FileResponse
 
 from backend.app.api import router
 from backend.app.services.edit_planner import build_initial_plan
@@ -34,9 +35,7 @@ app = FastAPI(
 app.include_router(router)
 
 
-@app.get("/health")
-def health() -> dict:
-    return {"status": "ok", "app": APP_NAME}
+@app.get("/", include_in_schema=False)\ndef home():\n    return FileResponse("frontend/index.html")\n\n\n@app.get("/health")\ndef health() -> dict:\n    return {"status": "ok", "app": APP_NAME}
 
 
 @app.post("/projects/upload")
